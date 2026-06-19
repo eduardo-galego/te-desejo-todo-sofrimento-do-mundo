@@ -22,6 +22,7 @@
       --text: #8fa0b2;
       --muted: #6d7f92;
       --line: rgba(184, 150, 48, 0.22);
+      --footer-height: 48px;
     }
 
     * {
@@ -40,10 +41,12 @@
       background: var(--bg);
       color: var(--text);
       font-family: "Lato", Arial, sans-serif;
+      padding-bottom: var(--footer-height);
     }
 
     img {
       display: block;
+      height: auto;
       max-width: 100%;
     }
 
@@ -131,14 +134,14 @@
 
     .hero-inner {
       display: grid;
-      grid-template-columns: minmax(220px, 330px) minmax(0, 1fr);
+      grid-template-columns: minmax(190px, 270px) minmax(0, 1fr);
       align-items: center;
       gap: clamp(32px, 7vw, 76px);
     }
 
     .hero-cover {
       justify-self: center;
-      width: min(100%, 330px);
+      width: min(100%, 270px);
       border: 1px solid rgba(184, 150, 48, 0.36);
       border-radius: 4px;
       box-shadow: 0 22px 70px rgba(0, 0, 0, 0.6);
@@ -409,14 +412,21 @@
     }
 
     .footer {
-      min-height: auto;
+      position: fixed;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 20;
+      min-height: var(--footer-height);
       background: #030508;
       border-top: 1px solid rgba(184, 150, 48, 0.1);
       color: #3d4e5e;
-      display: block;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-size: 0.78rem;
-      padding: 24px 20px;
-      scroll-snap-align: end;
+      line-height: 1.45;
+      padding: 10px 20px;
       text-align: center;
     }
 
@@ -447,7 +457,7 @@
       }
 
       .hero-cover {
-        width: min(78vw, 300px);
+        width: min(64vw, 230px);
         order: -1;
       }
 
@@ -499,7 +509,7 @@
     <section class="hero snap-section" id="inicio">
       <div class="content hero-inner">
         <figure class="hero-cover" aria-label="Capa do livro Te Desejo Todo o Sofrimento do Mundo">
-          <img src="assets/book-cover.png" alt="Capa do livro Te Desejo Todo o Sofrimento do Mundo" width="800" height="800">
+          <img src="assets/book-cover.png" alt="Capa do livro Te Desejo Todo o Sofrimento do Mundo" width="553" height="800">
         </figure>
 
         <div class="hero-text">
@@ -535,12 +545,12 @@
             <p>Como a árvore que aprofunda as raízes no frio, é no sofrimento que construímos nossos alicerces mais sólidos.</p>
           </article>
           <article class="qcard">
-            <div class="qcard-icon" aria-hidden="true">🪞</div>
+            <div class="qcard-icon" aria-hidden="true">😢</div>
             <h3>Sofrimento gerado por mim</h3>
             <p>Muitas vezes somos o próprio carrasco da nossa dor. Expectativas irreais criam decepções desnecessárias.</p>
           </article>
           <article class="qcard">
-            <div class="qcard-icon" aria-hidden="true">☮</div>
+            <div class="qcard-icon" aria-hidden="true">🕊️</div>
             <h3>Paz no meio da tempestade</h3>
             <p>Paz não é ausência de problemas; é sentir no coração que Deus está contigo, independente do momento.</p>
           </article>
@@ -623,5 +633,75 @@
   <footer class="footer">
     © Palavra &amp; Prece Editora Ltda. · Cíntia e Eduardo Galego · Todos os direitos reservados
   </footer>
+  <script>
+    (() => {
+      const canAnimateSections = window.matchMedia("(min-width: 821px) and (prefers-reduced-motion: no-preference)").matches;
+
+      if (!canAnimateSections) {
+        return;
+      }
+
+      const sections = Array.from(document.querySelectorAll(".snap-section"));
+      let isScrolling = false;
+
+      const easeInOutSine = (progress) => -(Math.cos(Math.PI * progress) - 1) / 2;
+
+      const closestSectionIndex = () => {
+        const viewportTop = window.scrollY;
+        return sections.reduce((closest, section, index) => {
+          const currentDistance = Math.abs(section.offsetTop - viewportTop);
+          const closestDistance = Math.abs(sections[closest].offsetTop - viewportTop);
+          return currentDistance < closestDistance ? index : closest;
+        }, 0);
+      };
+
+      const animateToSection = (section) => {
+        const startY = window.scrollY;
+        const targetY = section.offsetTop;
+        const distance = targetY - startY;
+        const duration = 1850;
+        const startTime = performance.now();
+
+        const animate = (currentTime) => {
+          const elapsed = currentTime - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          const easedProgress = easeInOutSine(progress);
+
+          window.scrollTo(0, startY + distance * easedProgress);
+
+          if (progress < 1) {
+            window.requestAnimationFrame(animate);
+            return;
+          }
+
+          window.scrollTo(0, targetY);
+          window.setTimeout(() => {
+            isScrolling = false;
+          }, 180);
+        };
+
+        window.requestAnimationFrame(animate);
+      };
+
+      window.addEventListener("wheel", (event) => {
+        if (event.ctrlKey || Math.abs(event.deltaY) < 12 || isScrolling) {
+          return;
+        }
+
+        const currentIndex = closestSectionIndex();
+        const nextIndex = event.deltaY > 0
+          ? Math.min(currentIndex + 1, sections.length - 1)
+          : Math.max(currentIndex - 1, 0);
+
+        if (nextIndex === currentIndex) {
+          return;
+        }
+
+        event.preventDefault();
+        isScrolling = true;
+        animateToSection(sections[nextIndex]);
+      }, { passive: false });
+    })();
+  </script>
 </body>
 </html>
